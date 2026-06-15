@@ -315,8 +315,7 @@ export async function getActivityFeed(limit = 30) {
   }
 
   const events: FeedEvent[] = checkIns.map((ci) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const user = (ci as any).users
+    const user = (ci as { users?: { name?: string; avatar_url?: string }; [key: string]: unknown }).users
     const count = checkInCounts[ci.user_id] ?? 0
     const milestones = [7, 14, 21, 28, 35, 42, 49, 56]
     const hitMilestone = milestones.find((m) => m === count)

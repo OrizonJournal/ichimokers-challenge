@@ -131,7 +131,7 @@ function LoginInner() {
               onClick={() => { setSent(false); setEmail('') }}
               className="text-text-muted text-xs underline mt-2"
             >
-              Usa un'altra email
+              Usa un&apos;altra email
             </button>
           </div>
         ) : (

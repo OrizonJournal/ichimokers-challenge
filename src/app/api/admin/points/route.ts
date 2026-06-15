@@ -38,26 +38,23 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin()
 
     // Fetch current user
-    const { data: user, error: fetchError } = await supabase
+    const { data: userData, error: fetchError } = await supabase
       .from('users')
       .select('id, bonus_points')
       .eq('id', userId)
       .single()
 
-    if (fetchError || !user) {
+    if (fetchError || !userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Calculate new bonus points (ensure it doesn't go below 0)
-    const newBonusPoints = Math.max(0, user.bonus_points + amount)
+    const currentBonusPoints = (userData as { id: string; bonus_points: number }).bonus_points
+    const newBonusPoints = Math.max(0, currentBonusPoints + amount)
 
     // Update bonus points
-    const { data: updatedUser, error: updateError } = await supabase
-      .from('users')
-      .update({ bonus_points: newBonusPoints })
-      .eq('id', userId)
-      .select('bonus_points')
-      .single()
+    const usersTable = supabase.from('users')
+    // @ts-ignore — Supabase infers update param as never without generated types
+    const { error: updateError } = await usersTable.update({ bonus_points: newBonusPoints }).eq('id', userId)
 
     if (updateError) throw updateError
 
@@ -73,12 +70,12 @@ export async function POST(request: NextRequest) {
       (sum, ci) => sum + (Array.isArray(ci.activities) ? ci.activities.length : 0),
       0
     )
-    const totalPoints = totalActivities + (updatedUser?.bonus_points ?? 0)
+    const totalPoints = totalActivities + newBonusPoints
 
     return NextResponse.json({
       success: true,
       userId,
-      bonus_points: updatedUser?.bonus_points ?? newBonusPoints,
+      bonus_points: newBonusPoints,
       total_points: totalPoints,
     })
   } catch (error) {
